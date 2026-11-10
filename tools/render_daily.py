@@ -10,7 +10,7 @@ Exemple :
 
 Aucune donnee inventee : sans --prev-close la pastille est omise, sans --catalyst-title le bloc catalyseur est omis.
 Le biais affiche est UNIQUEMENT celui du bot (H4).
-Niveaux cles : lus dans levels du JSON (key_resistance|resistance_vwap_daily, ema50 [+ ema50_tf], key_support) ; nuls -> omis.
+Niveaux cles : lus dans levels du JSON (key_resistance|resistance_vwap_daily, ema50 (H1, ou ema50_tf), key_support) ; nuls -> omis.
 Necessite Playwright (python) avec Chromium.
 """
 import argparse
@@ -86,7 +86,7 @@ def first(d, *keys):
 def build_levels(levels):
     """Bloc niveaux cles, lu UNIQUEMENT dans levels du JSON du bot. Valeur nulle -> tuile omise ; tout nul -> bloc omis."""
     levels = levels or {}
-    ema_tf = levels.get("ema50_tf")
+    ema_tf = levels.get("ema50_tf") or "H1"  # EMA 50 du bot = H1 par defaut
     items = [("Resistance", BEAR, first(levels, "key_resistance", "resistance", "resistance_vwap_daily")),
              (f"EMA 50 ({ema_tf})" if ema_tf else "EMA 50", GOLD, first(levels, "ema50", "ema_50")),
              ("Support", BULL, first(levels, "key_support", "support"))]
