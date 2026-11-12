@@ -132,8 +132,8 @@ def build_chart(candles, levels, prev_close):
     for name, v, col, dash in sorted(lines, key=lambda x: -x[1]):
         y = ly = Y(v)
         for u in used:                       # etiquettes sans chevauchement
-            if abs(ly - u) < 42:
-                ly = u + 42
+            if abs(ly - u) < 52:
+                ly = u + 52
         used.append(ly)
         svg.append(f'<line x1="{L}" y1="{y:.1f}" x2="{W-R+8}" y2="{y:.1f}" stroke="{col}" stroke-width="2" stroke-dasharray="{dash}"/>')
         svg.append(f'<rect x="{W-R+16}" y="{ly-19:.1f}" width="6" height="38" rx="3" fill="{col}"/>')
