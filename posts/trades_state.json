@@ -1,5 +1,11 @@
 {
-  "_doc": "Etat des posts de trades (tache horaire :08). Par numero de trade : open/close = 'published' (lien) ou 'prepared' (apercu envoye, en attente du « publie » d'Ahmed). Ne jamais republier un trade marque 'published'.",
-  "23": {"open": "skipped (avant automatisation)", "close": "skipped (avant automatisation)"},
-  "24": {"open": "published https://www.instagram.com/p/DfovbRUF2Tv/", "close": null}
+  "_doc": "Etat des posts de trades (tache horaire :08). Ouverture = STORY 1080x1920, cloture = POST de fil 1080x1350 (bilan). Par numero de trade : open/close = 'published <lien>' ou 'prepared <horodatage>' (apercu envoye, en attente du « publie » d'Ahmed). Ne jamais republier un trade marque 'published'.",
+  "23": {
+    "open": "skipped (avant automatisation)",
+    "close": "skipped (avant automatisation)"
+  },
+  "24": {
+    "open": "published https://www.instagram.com/stories/goldblessyou.xau/4028680875592284283 (story ; le post de fil https://www.instagram.com/p/DfovbRUF2Tv/ est a supprimer a la main)",
+    "close": null
+  }
 }
