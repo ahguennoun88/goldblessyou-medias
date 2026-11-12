@@ -43,10 +43,10 @@ PAGE = Template("""<!doctype html>
 <div style="font-family: 'Space Grotesk', sans-serif; font-size: $price_size; line-height: 1; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: #D9B44A">$price</div>
 <div style="font-size: 28px; color: #A69F90">Personal Analysis · $time CET</div>
 <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px">$pills</div></div>
-<div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 36px; padding: $bias_pad; display: flex; flex-direction: column; gap: 24px">
+<div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 36px; padding: $bias_pad; display: flex; flex-direction: column; gap: $bias_gap">
 <span style="font-size: 26px; letter-spacing: 0.16em; text-transform: uppercase; color: #A69F90; font-weight: 600">H4 bias</span>
-<div style="display: flex; align-items: center; gap: 20px; font-family: 'Space Grotesk', sans-serif; font-size: 80px; line-height: 1; font-weight: 700; color: $bias_color">
-<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">$bias_icon</svg>$bias_label</div>
+<div style="display: flex; align-items: center; gap: 20px; font-family: 'Space Grotesk', sans-serif; font-size: $bias_size; line-height: 1; font-weight: 700; color: $bias_color">
+<svg width="$bias_icon" height="$bias_icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">$bias_paths</svg>$bias_label</div>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">$tiles</div></div>
 <div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 28px; padding: 26px 36px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
 <span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: #A69F90; font-weight: 600">Bot decision · $time CET</span><span style="font-size: 26px">$decision_text</span></span>
@@ -113,7 +113,7 @@ def build_chart(candles, levels, prev_close):
               (prev_close or {}).get("value"), "#A69F90", "14 8"),
              (src("Support", "key_support_src"), first(levels, "key_support", "support"), BULL, "8 8")]
     lines = [x for x in lines if x[1] is not None]
-    W, H, L, R, T, B = 900, 330, 6, 190, 16, 40
+    W, H, L, R, T, B = 900, 470, 6, 190, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.06 or 1
@@ -187,9 +187,11 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         pills.append(PILL.format(f"ATR (H1): {a['atr']:.2f}"))
 
     regime = REGIMES.get(a.get("regime") or "", (a.get("regime") or "—").replace("_", " ").capitalize())
-    tiles = [TILE.format("ADX (H1)", 40, "—" if a.get("adx") is None else f"{a['adx']:.1f}"),
-             TILE.format("RSI (H1)", 40, "—" if a.get("rsi") is None else f"{a['rsi']:.1f}"),
-             TILE.format("Regime", 34 if len(regime) > 6 else 40, e(regime))]
+    big = 34 if chart else 40
+    tile = TILE.replace("padding: 22px 26px", "padding: 14px 22px") if chart else TILE
+    tiles = [tile.format("ADX (H1)", big, "—" if a.get("adx") is None else f"{a['adx']:.1f}"),
+             tile.format("RSI (H1)", big, "—" if a.get("rsi") is None else f"{a['rsi']:.1f}"),
+             tile.format("Regime", (30 if chart else 34) if len(regime) > 6 else big, e(regime))]
 
     catalyst = ""
     if cat_title:
@@ -201,12 +203,14 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
     return PAGE.substitute(
         date_iso=ref.isoformat(), date_label=ref.strftime("%a, %b ") + str(ref.day) + ref.strftime(", %Y"),
         price=money(a["price"]), time=time_txt, pills="".join(pills),
-        bias_color=bias_color, bias_icon=bias_icon, bias_label=bias_label, tiles="".join(tiles),
+        bias_color=bias_color, bias_paths=bias_icon, bias_label=bias_label, tiles="".join(tiles),
         decision=e(decision), decision_text=e(decision_text), decision_color=decision_color,
         levels=lv, catalyst=catalyst, handle=HANDLE,
-        pad_top="180px" if lv else "250px", pad_bottom="290px" if lv else "340px",
-        gap="22px" if lv else "30px", bias_pad="30px 40px" if lv else "40px",
-        price_size="124px" if lv else "150px")
+        pad_top="170px" if chart else ("180px" if lv else "250px"), pad_bottom="250px" if chart else ("290px" if lv else "340px"),
+        gap="20px" if chart else ("22px" if lv else "30px"),
+        bias_pad="22px 36px" if chart else ("30px 40px" if lv else "40px"),
+        bias_gap="14px" if chart else "24px", bias_size="56px" if chart else "80px", bias_icon=44 if chart else 64,
+        price_size="112px" if chart else ("124px" if lv else "150px"))
 
 
 def render(html_text, out_path):
