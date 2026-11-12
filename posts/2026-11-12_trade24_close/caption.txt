@@ -1,0 +1,11 @@
+Trade #24 closed: +0.65R 🟢
+
+SELL XAU/USD · Breakout setup · London session
+Entry: 3,964.22 → Exit: 3,950.58
+Exit: protective stop, locked in profit (TP 3,891.80 not reached)
+Result: +0.65R · +€436.24
+Duration: 3h21 (08:00 → 11:20 CET)
+
+Personal view, not financial advice. Trading involves risk of loss.
+
+#gold #xauusd #tradingbot #algotrading #goldtrading
