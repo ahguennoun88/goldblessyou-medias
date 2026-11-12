@@ -1,0 +1,5 @@
+{
+  "_doc": "Etat des posts de trades (tache horaire :08). Par numero de trade : open/close = 'published' (lien) ou 'prepared' (apercu envoye, en attente du « publie » d'Ahmed). Ne jamais republier un trade marque 'published'.",
+  "23": {"open": "skipped (avant automatisation)", "close": "skipped (avant automatisation)"},
+  "24": {"open": "published https://www.instagram.com/p/DfovbRUF2Tv/", "close": null}
+}

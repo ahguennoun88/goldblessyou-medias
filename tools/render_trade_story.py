@@ -88,12 +88,14 @@ def context_lines(t, ctx):
     if not sell and cs and lv.get("key_resistance_src") == "swing_high" and res and cs[-1]["c"] > res:
         why.append(f"Breakout: {cs[-1]['t'][-5:]} candle closed above the {px(res)} swing high")
     if a.get("adx") is not None:
-        trend = "Strong" if a["adx"] >= 25 else "Weak"
         ema = lv.get("ema50")
         side = ""
         if ema is not None and a.get("price") is not None:
             side = f" · price {'below' if a['price'] < ema else 'above'} EMA 50 H1 ({px(ema)})"
-        why.append(f"{trend} H1 trend (ADX {a['adx']:.1f}){side}")
+        if a["adx"] >= 25:
+            why.append(f"Strong H1 trend (ADX {a['adx']:.1f}){side}")
+        else:
+            risk.append(f"weak H1 trend (ADX {a['adx']:.1f})")
     rsi = a.get("rsi")
     if rsi is not None and ((sell and rsi < 35) or (not sell and rsi > 65)):
         risk.append(f"RSI H1 {rsi:.1f} — {'near oversold' if sell else 'near overbought'}")
@@ -256,8 +258,10 @@ def main():
     a = ap.parse_args()
     if a.format == "post":
         FMT.update(h=1350, pad="64px 72px 56px", gap="24px", tall="120px")
-    t = json.loads(Path(a.trade).read_text(encoding="utf-8"))["trade"]
-    ctx = json.loads(Path(a.context).read_text(encoding="utf-8")) if a.context else None
+    tdoc = json.loads(Path(a.trade).read_text(encoding="utf-8"))
+    t = tdoc["trade"]
+    # contexte : --context, sinon l'analyse du bot juste avant l'entree exportee avec le trade (export v5)
+    ctx = json.loads(Path(a.context).read_text(encoding="utf-8")) if a.context else tdoc.get("entry_analysis")
     if ctx is not None and a.candles:
         ctx["candles_h1"] = json.loads(Path(a.candles).read_text(encoding="utf-8")).get("candles_h1")
     account = a.account
