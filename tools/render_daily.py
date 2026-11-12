@@ -10,6 +10,8 @@ Exemple :
 
 Aucune donnee inventee : sans --prev-close la pastille est omise, sans --catalyst-title le bloc catalyseur est omis.
 Le biais affiche est UNIQUEMENT celui du bot (H4).
+Graphique : si candles_h1 est present, chandeliers H1 + resistance / pivot / cloture veille / support
+(remplace les tuiles de niveaux) ; cloture veille lue dans prev_close du JSON si --prev-close absent.
 Niveaux cles : lus dans levels du JSON (key_resistance|resistance_vwap_daily, ema50 (H1, ou ema50_tf), key_support) ; nuls -> omis.
 Necessite Playwright (python) avec Chromium.
 """
@@ -96,11 +98,69 @@ def build_levels(levels):
     return LEVELS.substitute(n=len(tiles), tiles="".join(tiles))
 
 
+def build_chart(candles, levels, prev_close):
+    """Graphique H1 en chandeliers (candles_h1 du JSON) + resistance / pivot du jour / cloture veille / support.
+    Toutes les valeurs viennent du JSON du bot ; un niveau nul n'est pas trace. Aucune bougie -> chaine vide."""
+    cs = [c for c in (candles or []) if None not in (c.get("o"), c.get("h"), c.get("l"), c.get("c"))]
+    if len(cs) < 2:
+        return ""
+    levels = levels or {}
+    src = lambda base, k: {"swing_high": "Swing high", "swing_low": "Swing low"}.get(
+        levels.get(k), f"{base} {levels[k]}" if levels.get(k) else base)
+    lines = [(src("Resistance", "key_resistance_src"), first(levels, "key_resistance", "resistance"), BEAR, "8 8"),
+             ("Daily pivot", (levels.get("pivots") or {}).get("pivot"), GOLD, "3 7"),
+             (f"{prev_close['day']} close" if prev_close and prev_close.get("day") else "Prev. close",
+              (prev_close or {}).get("value"), "#A69F90", "14 8"),
+             (src("Support", "key_support_src"), first(levels, "key_support", "support"), BULL, "8 8")]
+    lines = [x for x in lines if x[1] is not None]
+    W, H, L, R, T, B = 900, 330, 6, 190, 16, 40
+    vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
+    lo, hi = min(vals), max(vals)
+    pad = (hi - lo) * 0.06 or 1
+    lo, hi = lo - pad, hi + pad
+    n = len(cs)
+    step = (W - L - R) / n
+    X = lambda i: L + step * (i + 0.5)
+    Y = lambda v: T + (hi - v) * (H - T - B) / (hi - lo)
+    svg = [f'<svg viewBox="0 0 {W} {H}" style="width:100%;height:auto;display:block" font-family="Inter, sans-serif">']
+    for i, c in enumerate(cs):
+        hh = c["t"][11:16]
+        if hh.endswith(":00") and int(hh[:2]) % 6 == 0 and X(i) > 30:
+            svg.append(f'<line x1="{X(i):.1f}" y1="{T}" x2="{X(i):.1f}" y2="{H-B}" stroke="#2E2A22" stroke-width="1"/>')
+            svg.append(f'<text x="{X(i):.1f}" y="{H-12}" fill="#7D776B" font-size="20" text-anchor="middle">{hh}</text>')
+    used = []
+    for name, v, col, dash in sorted(lines, key=lambda x: -x[1]):
+        y = ly = Y(v)
+        for u in used:                       # etiquettes sans chevauchement
+            if abs(ly - u) < 42:
+                ly = u + 42
+        used.append(ly)
+        svg.append(f'<line x1="{L}" y1="{y:.1f}" x2="{W-R+8}" y2="{y:.1f}" stroke="{col}" stroke-width="2" stroke-dasharray="{dash}"/>')
+        svg.append(f'<rect x="{W-R+16}" y="{ly-19:.1f}" width="6" height="38" rx="3" fill="{col}"/>')
+        svg.append(f'<text x="{W-R+32}" y="{ly-3:.1f}" fill="#A69F90" font-size="18">{html.escape(name)}</text>')
+        svg.append(f'<text x="{W-R+32}" y="{ly+19:.1f}" fill="#F4EFE6" font-size="22" font-weight="700" '
+                   f'font-family="Space Grotesk, sans-serif">{v:,.2f}</text>')
+    bw = step * 0.62
+    for i, c in enumerate(cs):
+        col = BULL if c["c"] >= c["o"] else BEAR
+        x = X(i)
+        svg.append(f'<line x1="{x:.1f}" y1="{Y(c["h"]):.1f}" x2="{x:.1f}" y2="{Y(c["l"]):.1f}" stroke="{col}" stroke-width="2"/>')
+        top, bot = Y(max(c["o"], c["c"])), Y(min(c["o"], c["c"]))
+        svg.append(f'<rect x="{x-bw/2:.1f}" y="{top:.1f}" width="{bw:.1f}" height="{max(bot-top, 2):.1f}" rx="2" fill="{col}"/>')
+    svg.append("</svg>")
+    chg = (cs[-1]["c"] - cs[0]["o"]) / cs[0]["o"] * 100
+    return (f'<div style="background:#1A1815;border:1px solid #2E2A22;border-radius:36px;padding:28px 40px 18px;'
+            f'display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:baseline">'
+            f'<span style="font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:#A69F90;font-weight:600">'
+            f'H1 · last {n}h · bot</span><span style="font-size:26px;font-weight:700;color:{BULL if chg >= 0 else BEAR};'
+            f'font-variant-numeric:tabular-nums">{"+" if chg >= 0 else "−"}{abs(chg):.2f}%</span></div>{"".join(svg)}</div>')
+
+
 def money(x):
     return f"${x:,.2f}"
 
 
-def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, levels=None):
+def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, levels=None, candles=None, prev_obj=None):
     e = html.escape
     bias = (a.get("h4_bias") or "").lower()
     if bias == "bullish":
@@ -116,8 +176,9 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
                      "SELL": "Short entry signal — see trade story"}.get(decision, "See trade story")
     decision_color = {"BUY": BULL, "SELL": BEAR}.get(decision, GOLD)
 
+    chart = build_chart(candles, levels, prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
     pills = []
-    if prev_close is not None:
+    if prev_close is not None and not chart:  # avec le graphique, la cloture veille est tracee dessus
         txt = f"{e(prev_day)} close: {money(prev_close)}"
         if prev_pct is not None:
             txt += f" ({'+' if prev_pct >= 0 else '−'}{abs(prev_pct):.2f}%)"
@@ -135,7 +196,7 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         size = "56px" if len(cat_title) <= 24 else "44px"
         catalyst = CATALYST.substitute(size=size, title=e(cat_title), desc=e(cat_desc or ""))
 
-    lv = build_levels(levels)  # bloc niveaux : mise en page resserree pour garder la zone basse libre
+    lv = chart or build_levels(levels)  # graphique si bougies, sinon tuiles ; bloc niveaux : mise en page resserree pour garder la zone basse libre
     time_txt = (a.get("analysis_at") or "07:00")[-5:]
     return PAGE.substitute(
         date_iso=ref.isoformat(), date_label=ref.strftime("%a, %b ") + str(ref.day) + ref.strftime(", %Y"),
@@ -177,8 +238,12 @@ def main():
     if not analysis or analysis.get("price") is None:
         sys.exit(f"Pas d'analyse exploitable dans {a.json} : {doc.get('warnings')}")
     ref = date.fromisoformat(doc["reference_date"])
+    pc = doc.get("prev_close") or {}
+    if a.prev_close is None and pc.get("value") is not None:   # cloture veille du bot (bougies_h1) par defaut
+        a.prev_close, a.prev_close_pct, a.prev_day = pc["value"], pc.get("pct"), pc.get("day") or a.prev_day
+    prev_obj = {"value": a.prev_close, "pct": a.prev_close_pct, "day": a.prev_day} if a.prev_close is not None else None
     render(build_html(analysis, ref, a.prev_close, a.prev_close_pct, a.prev_day, a.catalyst_title, a.catalyst_desc,
-                        doc.get("levels")), a.out)
+                      doc.get("levels"), doc.get("candles_h1"), prev_obj), a.out)
     print(f"OK {a.out}")
 
 
