@@ -113,7 +113,7 @@ def build_chart(candles, levels, prev_close):
               (prev_close or {}).get("value"), "#A69F90", "14 8"),
              (src("Support", "key_support_src"), first(levels, "key_support", "support"), BULL, "8 8")]
     lines = [x for x in lines if x[1] is not None]
-    W, H, L, R, T, B = 900, 470, 6, 190, 16, 40
+    W, H, L, R, T, B = 900, 470, 4, 132, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.06 or 1
@@ -135,10 +135,10 @@ def build_chart(candles, levels, prev_close):
             if abs(ly - u) < 52:
                 ly = u + 52
         used.append(ly)
-        svg.append(f'<line x1="{L}" y1="{y:.1f}" x2="{W-R+8}" y2="{y:.1f}" stroke="{col}" stroke-width="2" stroke-dasharray="{dash}"/>')
-        svg.append(f'<rect x="{W-R+16}" y="{ly-19:.1f}" width="6" height="38" rx="3" fill="{col}"/>')
-        svg.append(f'<text x="{W-R+32}" y="{ly-3:.1f}" fill="#A69F90" font-size="18">{html.escape(name)}</text>')
-        svg.append(f'<text x="{W-R+32}" y="{ly+19:.1f}" fill="#F4EFE6" font-size="22" font-weight="700" '
+        svg.append(f'<line x1="{L}" y1="{y:.1f}" x2="{W-R+4}" y2="{y:.1f}" stroke="{col}" stroke-width="2" stroke-dasharray="{dash}"/>')
+        svg.append(f'<rect x="{W-R+12}" y="{ly-19:.1f}" width="6" height="38" rx="3" fill="{col}"/>')
+        svg.append(f'<text x="{W-R+24}" y="{ly-3:.1f}" fill="#A69F90" font-size="18">{html.escape(name)}</text>')
+        svg.append(f'<text x="{W-R+24}" y="{ly+19:.1f}" fill="#F4EFE6" font-size="22" font-weight="700" '
                    f'font-family="Space Grotesk, sans-serif">{v:,.2f}</text>')
     bw = step * 0.62
     for i, c in enumerate(cs):
@@ -149,7 +149,7 @@ def build_chart(candles, levels, prev_close):
         svg.append(f'<rect x="{x-bw/2:.1f}" y="{top:.1f}" width="{bw:.1f}" height="{max(bot-top, 2):.1f}" rx="2" fill="{col}"/>')
     svg.append("</svg>")
     chg = (cs[-1]["c"] - cs[0]["o"]) / cs[0]["o"] * 100
-    return (f'<div style="background:#1A1815;border:1px solid #2E2A22;border-radius:36px;padding:28px 40px 18px;'
+    return (f'<div style="background:#1A1815;border:1px solid #2E2A22;border-radius:36px;padding:28px 30px 18px 34px;'
             f'display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:baseline">'
             f'<span style="font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:#A69F90;font-weight:600">'
             f'H1 · last {n}h · bot</span><span style="font-size:26px;font-weight:700;color:{BULL if chg >= 0 else BEAR};'
