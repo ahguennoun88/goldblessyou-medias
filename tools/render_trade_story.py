@@ -38,12 +38,15 @@ def day_label(s):
     return d.strftime("%a, %b ") + str(d.day) + d.strftime(", %Y")
 
 
+FMT = {"h": 1920, "pad": "250px 88px 340px", "gap": "32px", "tall": "180px"}
+
+
 def shell(body, header_left, header_right):
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=block" rel="stylesheet">
 <style>body{{margin:0;background:#0F0E0C}}</style></head><body>
-<div style="width: 1080px; height: 1920px; box-sizing: border-box; background: #0F0E0C; color: {INK}; font-family: Inter, system-ui, sans-serif; padding: 250px 88px 340px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden">
-<div style="display: flex; flex-direction: column; gap: 32px">
+<div style="width: 1080px; height: {FMT['h']}px; box-sizing: border-box; background: #0F0E0C; color: {INK}; font-family: Inter, system-ui, sans-serif; padding: {FMT['pad']}; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: {FMT['gap']}">
 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 26px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600">
 <span style="color: {ACCENT}">{e(header_left)}</span><span style="color: {MUTED}">{e(header_right)}</span></div>
 {body}
@@ -131,7 +134,7 @@ def story_open(t, ctx, why_extra, risk_extra, account):
     # ordre par prix, de haut en bas : BUY = TP / entree / SL ; SELL = SL / entree / TP
     top, top_c, bottom, bottom_c = (sl_row, BEAR, tp_row, BULL) if sell else (tp_row, BULL, sl_row, BEAR)
     ladder = (f'<div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 36px; padding: 36px 40px; display: grid; '
-              f'grid-template-columns: 28px minmax(0, 1fr); grid-template-rows: 48px {"60px" if sell else "180px"} 48px {"180px" if sell else "60px"} 48px; column-gap: 28px">'
+              f'grid-template-columns: 28px minmax(0, 1fr); grid-template-rows: 48px {"60px" if sell else FMT["tall"]} 48px {FMT["tall"] if sell else "60px"} 48px; column-gap: 28px">'
               f'{dot(top_c)}{top}'
               f'{bar(top_c)}{"<div></div>" if sell else rr_cell}'
               f'{dot(ACCENT)}{lvl("Entry", entry, ACCENT)}'
@@ -229,10 +232,10 @@ def render(html_text, out):
     tmp.write_text(html_text, encoding="utf-8")
     with sync_playwright() as p:
         b = p.chromium.launch()
-        pg = b.new_page(viewport={"width": 1080, "height": 1920}, device_scale_factor=1)
+        pg = b.new_page(viewport={"width": 1080, "height": FMT["h"]}, device_scale_factor=1)
         pg.goto(tmp.resolve().as_uri(), wait_until="networkidle")
         pg.evaluate("document.fonts.ready")
-        pg.screenshot(path=str(out), type="jpeg", quality=92, clip={"x": 0, "y": 0, "width": 1080, "height": 1920})
+        pg.screenshot(path=str(out), type="jpeg", quality=92, clip={"x": 0, "y": 0, "width": 1080, "height": FMT["h"]})
         b.close()
     tmp.unlink()
 
@@ -248,8 +251,11 @@ def main():
     ap.add_argument("--lesson", help="lecon (story de cloture) ; sans elle, le bloc Takeaway est omis")
     ap.add_argument("--account", default=None, help="libelle du compte (defaut : setup.account du challenge si fourni)")
     ap.add_argument("--challenge", help="challenge_*.json (compte Live)")
+    ap.add_argument("--format", choices=["story", "post"], default="story", help="story 1080x1920 ou post 1080x1350 (4:5)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
+    if a.format == "post":
+        FMT.update(h=1350, pad="64px 72px 56px", gap="24px", tall="120px")
     t = json.loads(Path(a.trade).read_text(encoding="utf-8"))["trade"]
     ctx = json.loads(Path(a.context).read_text(encoding="utf-8")) if a.context else None
     if ctx is not None and a.candles:

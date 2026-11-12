@@ -1,0 +1,12 @@
+Trade of the day — the bot is short gold.
+
+SELL XAU/USD at 3,964.22 · Thu 08:00 CET · breakout setup, H1
+Stop 3,984.91 · Target 3,891.80 · R:R 1 : 3.5
+
+Why: bearish H4 trend, the 07:00 candle closed below the 3,968.80 swing low, strong H1 trend (ADX 37.8) with price under the H1 EMA 50.
+Risk: RSI near oversold and the S1 pivot (3,957.94) just below entry.
+
+Result posted when it closes — win or loss.
+
+Personal view, not financial advice. Trading involves risk of loss.
+#gold #xauusd #tradingbot #algotrading #goldtrading
