@@ -49,7 +49,7 @@ PAGE = Template("""<!doctype html>
 <svg width="$bias_icon" height="$bias_icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">$bias_paths</svg>$bias_label</div>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">$tiles</div></div>
 <div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 28px; padding: 26px 36px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
-<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: #A69F90; font-weight: 600">Bot decision · $time CET</span><span style="font-size: 26px">$decision_text</span></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: #A69F90; font-weight: 600">$decision_title</span><span style="font-size: 26px; line-height: 1.35">$decision_text</span></span>
 <span style="font-family: 'Space Grotesk', sans-serif; font-size: 56px; line-height: 1; font-weight: 700; color: $decision_color">$decision</span></div>
 $levels
 $catalyst
@@ -118,7 +118,7 @@ def build_chart(candles, levels, prev_close, price=None):
     if levels.get("key_support_src") not in (None, "S1") and piv.get("pivot_s1") is not None:
         lines.append(("Pivot S1", piv["pivot_s1"], BULL, "2 6"))     # idem pour S1
     lines = [x for x in lines if x[1] is not None]
-    W, H, L, R, T, B = 900, 470, 4, 132, 16, 40
+    W, H, L, R, T, B = 900, 430, 4, 132, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.06 or 1
@@ -170,7 +170,8 @@ def money(x):
     return f"${x:,.2f}"
 
 
-def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, levels=None, candles=None, prev_obj=None):
+def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, levels=None, candles=None, prev_obj=None,
+               open_trades=None):
     e = html.escape
     bias = (a.get("h4_bias") or "").lower()
     if bias == "bullish":
@@ -185,6 +186,17 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
                      "BUY": "Long entry signal — see trade story",
                      "SELL": "Short entry signal — see trade story"}.get(decision, "See trade story")
     decision_color = {"BUY": BULL, "SELL": BEAR}.get(decision, GOLD)
+    decision_title = f"Bot decision · {(a.get('analysis_at') or '07:00')[-5:]} CET"
+    decision_html = e(decision_text)
+    if open_trades:                        # position en cours : elle remplace la decision horaire
+        t = open_trades[0]
+        decision = t["side"]
+        decision_color = BULL if decision == "BUY" else BEAR
+        decision_title = "Open position · bot" + (f" (+{len(open_trades) - 1})" if len(open_trades) > 1 else "")
+        l1 = f"Entry {money(t['entry'])}" + (f" · since {t['opened_at'][-5:]} CET" if t.get("opened_at") else "")
+        l2 = " · ".join(x for x in (f"SL {money(t['stop_loss'])}" if t.get("stop_loss") is not None else "",
+                                     f"TP {money(t['take_profit'])}" if t.get("take_profit") is not None else "") if x)
+        decision_html = e(l1) + (f'<br><span style="color: #A69F90">{e(l2)}</span>' if l2 else "")
 
     chart = build_chart(candles, levels, price=a.get("price"), prev_close=prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
     pills = []
@@ -214,7 +226,7 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         date_iso=ref.isoformat(), date_label=ref.strftime("%a, %b ") + str(ref.day) + ref.strftime(", %Y"),
         price=money(a["price"]), time=time_txt, pills="".join(pills),
         bias_color=bias_color, bias_paths=bias_icon, bias_label=bias_label, tiles="".join(tiles),
-        decision=e(decision), decision_text=e(decision_text), decision_color=decision_color,
+        decision=e(decision), decision_text=decision_html, decision_title=e(decision_title), decision_color=decision_color,
         levels=lv, catalyst=catalyst, handle=HANDLE,
         pad_top="170px" if chart else ("180px" if lv else "250px"), pad_bottom="250px" if chart else ("290px" if lv else "340px"),
         gap="20px" if chart else ("22px" if lv else "30px"),
@@ -246,6 +258,8 @@ def main():
     ap.add_argument("--prev-day", default="Prev.")
     ap.add_argument("--catalyst-title")
     ap.add_argument("--catalyst-desc")
+    ap.add_argument("--trade-json", action="append", help="trade_*.json (repetable) ; defaut : recherche automatique")
+    ap.add_argument("--no-trades", action="store_true", help="ne pas afficher les positions ouvertes")
     a = ap.parse_args()
     doc = json.loads(Path(a.json).read_text(encoding="utf-8"))
     analysis = doc.get("analysis")
@@ -257,8 +271,28 @@ def main():
         a.prev_close, a.prev_close_pct, a.prev_day = pc["value"], pc.get("pct"), pc.get("day") or a.prev_day
     prev_obj = {"value": a.prev_close, "pct": a.prev_close_pct, "day": a.prev_day} if a.prev_close is not None else None
     render(build_html(analysis, ref, a.prev_close, a.prev_close_pct, a.prev_day, a.catalyst_title, a.catalyst_desc,
-                      doc.get("levels"), doc.get("candles_h1"), prev_obj), a.out)
+                      doc.get("levels"), doc.get("candles_h1"), prev_obj, open_trades(a, ref)), a.out)
     print(f"OK {a.out}")
+
+
+def open_trades(a, ref):
+    """Trades ouverts : --trade-json, sinon trade_<date>_trade*.json a cote du daily (ou dans le dossier parent).
+    Seuls les trades status=open avec un prix d'entree sont retenus ; aucun -> la decision du bot est affichee."""
+    if a.no_trades:
+        return []
+    files = [Path(f) for f in (a.trade_json or [])]
+    if not files:
+        d = Path(a.json).resolve().parent
+        for folder in (d, d.parent):
+            files = sorted(folder.glob(f"trade_{ref.isoformat()}_trade*.json"))
+            if files:
+                break
+    out = []
+    for f in files:
+        t = (json.loads(f.read_text(encoding="utf-8")).get("trade") or {})
+        if t.get("status") == "open" and t.get("entry") is not None and t.get("side") in ("BUY", "SELL"):
+            out.append(t)
+    return sorted(out, key=lambda t: t.get("opened_at") or "", reverse=True)
 
 
 if __name__ == "__main__":
