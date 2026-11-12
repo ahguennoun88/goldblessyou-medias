@@ -112,6 +112,11 @@ def build_chart(candles, levels, prev_close, price=None):
              (f"{prev_close['day']} close" if prev_close and prev_close.get("day") else "Prev. close",
               (prev_close or {}).get("value"), "#A69F90", "14 8"),
              (src("Support", "key_support_src"), first(levels, "key_support", "support"), BULL, "8 8")]
+    piv = levels.get("pivots") or {}
+    if levels.get("key_resistance_src") not in (None, "R1") and piv.get("pivot_r1") is not None:
+        lines.append(("Pivot R1", piv["pivot_r1"], BEAR, "2 6"))     # R1 toujours visible, meme si un swing est plus proche
+    if levels.get("key_support_src") not in (None, "S1") and piv.get("pivot_s1") is not None:
+        lines.append(("Pivot S1", piv["pivot_s1"], BULL, "2 6"))     # idem pour S1
     lines = [x for x in lines if x[1] is not None]
     W, H, L, R, T, B = 900, 470, 4, 132, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
