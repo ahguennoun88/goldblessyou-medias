@@ -98,7 +98,7 @@ def build_levels(levels):
     return LEVELS.substitute(n=len(tiles), tiles="".join(tiles))
 
 
-def build_chart(candles, levels, prev_close):
+def build_chart(candles, levels, prev_close, price=None):
     """Graphique H1 en chandeliers (candles_h1 du JSON) + resistance / pivot du jour / cloture veille / support.
     Toutes les valeurs viennent du JSON du bot ; un niveau nul n'est pas trace. Aucune bougie -> chaine vide."""
     cs = [c for c in (candles or []) if None not in (c.get("o"), c.get("h"), c.get("l"), c.get("c"))]
@@ -148,12 +148,17 @@ def build_chart(candles, levels, prev_close):
         top, bot = Y(max(c["o"], c["c"])), Y(min(c["o"], c["c"]))
         svg.append(f'<rect x="{x-bw/2:.1f}" y="{top:.1f}" width="{bw:.1f}" height="{max(bot-top, 2):.1f}" rx="2" fill="{col}"/>')
     svg.append("</svg>")
-    chg = (cs[-1]["c"] - cs[0]["o"]) / cs[0]["o"] * 100
+    pcv = (prev_close or {}).get("value")
+    if price is not None and pcv:          # variation depuis la cloture de la veille (pas sur 24 h glissantes)
+        chg, chg_lbl = (price - pcv) / pcv * 100, f"vs {prev_close.get('day') or 'prev.'} close "
+    else:
+        chg, chg_lbl = (cs[-1]["c"] - cs[0]["o"]) / cs[0]["o"] * 100, "24h "
     return (f'<div style="background:#1A1815;border:1px solid #2E2A22;border-radius:36px;padding:28px 30px 18px 34px;'
             f'display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:baseline">'
             f'<span style="font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:#A69F90;font-weight:600">'
             f'H1 · last {n}h · bot</span><span style="font-size:26px;font-weight:700;color:{BULL if chg >= 0 else BEAR};'
-            f'font-variant-numeric:tabular-nums">{"+" if chg >= 0 else "−"}{abs(chg):.2f}%</span></div>{"".join(svg)}</div>')
+            f'font-variant-numeric:tabular-nums"><span style="font-size:22px;font-weight:500;color:#A69F90">{chg_lbl}</span>'
+            f'{"+" if chg >= 0 else "−"}{abs(chg):.2f}%</span></div>{"".join(svg)}</div>')
 
 
 def money(x):
@@ -176,7 +181,7 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
                      "SELL": "Short entry signal — see trade story"}.get(decision, "See trade story")
     decision_color = {"BUY": BULL, "SELL": BEAR}.get(decision, GOLD)
 
-    chart = build_chart(candles, levels, prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
+    chart = build_chart(candles, levels, price=a.get("price"), prev_close=prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
     pills = []
     if prev_close is not None and not chart:  # avec le graphique, la cloture veille est tracee dessus
         txt = f"{e(prev_day)} close: {money(prev_close)}"
