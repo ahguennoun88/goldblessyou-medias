@@ -105,7 +105,7 @@ def build_chart(candles, levels, prev_close, price=None):
     if len(cs) < 2:
         return ""
     levels = levels or {}
-    src = lambda base, k: {"swing_high": "Swing high", "swing_low": "Swing low"}.get(
+    src = lambda base, k: {"swing_high": "Swing high", "swing_low": "Swing low", "R1": "Pivot R1", "S1": "Pivot S1"}.get(
         levels.get(k), f"{base} {levels[k]}" if levels.get(k) else base)
     lines = [(src("Resistance", "key_resistance_src"), first(levels, "key_resistance", "resistance"), BEAR, "8 8"),
              ("Daily pivot", (levels.get("pivots") or {}).get("pivot"), GOLD, "3 7"),
