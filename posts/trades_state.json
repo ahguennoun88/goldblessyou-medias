@@ -16,5 +16,9 @@
   "5": {
     "open": "skipped (trade historique du 18/09/2026, journal v97, export apparu le 13/11 - pas un nouveau trade)",
     "close": "skipped (trade historique du 18/09/2026, journal v97, export apparu le 13/11 - pas un nouveau trade)"
+  },
+  "1": {
+    "open": "skipped (doublon du trade 24 deja publie : journal bot renumerote en v104, trade_no 1 = meme trade du 12/11 08:00-11:20)",
+    "close": "skipped (doublon du trade 24 deja publie : journal bot renumerote en v104, trade_no 1 = meme trade du 12/11 08:00-11:20)"
   }
 }
