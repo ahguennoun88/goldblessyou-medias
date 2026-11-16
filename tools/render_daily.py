@@ -105,7 +105,8 @@ def build_chart(candles, levels, prev_close, price=None):
     if len(cs) < 2:
         return ""
     levels = levels or {}
-    src = lambda base, k: {"swing_high": "Swing high", "swing_low": "Swing low", "R1": "Pivot R1", "S1": "Pivot S1"}.get(
+    src = lambda base, k: {"swing_high": "Swing high", "swing_low": "Swing low",
+                           **{f"R{i}": f"R{i} resistance" for i in (1, 2, 3)}, **{f"S{i}": f"S{i} support" for i in (1, 2, 3)}}.get(
         levels.get(k), f"{base} {levels[k]}" if levels.get(k) else base)
     lines = [(src("Resistance", "key_resistance_src"), first(levels, "key_resistance", "resistance"), BEAR, "8 8"),
              ("Daily pivot", (levels.get("pivots") or {}).get("pivot"), GOLD, "3 7"),
@@ -114,11 +115,11 @@ def build_chart(candles, levels, prev_close, price=None):
              (src("Support", "key_support_src"), first(levels, "key_support", "support"), BULL, "8 8")]
     piv = levels.get("pivots") or {}
     if levels.get("key_resistance_src") not in (None, "R1") and piv.get("pivot_r1") is not None:
-        lines.append(("Pivot R1", piv["pivot_r1"], BEAR, "2 6"))     # R1 toujours visible, meme si un swing est plus proche
+        lines.append(("R1 resistance", piv["pivot_r1"], BEAR, "2 6"))     # R1 toujours visible, meme si un swing est plus proche
     if levels.get("key_support_src") not in (None, "S1") and piv.get("pivot_s1") is not None:
-        lines.append(("Pivot S1", piv["pivot_s1"], BULL, "2 6"))     # idem pour S1
+        lines.append(("S1 support", piv["pivot_s1"], BULL, "2 6"))     # idem pour S1
     lines = [x for x in lines if x[1] is not None]
-    W, H, L, R, T, B = 900, 430, 4, 132, 16, 40
+    W, H, L, R, T, B = 900, 430, 4, 142, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.06 or 1
