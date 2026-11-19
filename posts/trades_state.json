@@ -22,7 +22,7 @@
     "close": "skipped (doublon du trade 24 deja publie : journal bot renumerote en v104, trade_no 1 = meme trade du 12/11 08:00-11:20)"
   },
   "1_2026-11-19": {
-    "open": "prepared 2026-11-19T18:14+0100 (story stories/2026-11-19_trade1_open.jpg)",
+    "open": "published https://www.instagram.com/stories/goldblessyou.xau/4033987629263826670 (story)",
     "close": null,
     "_note": "trade_no 1 du journal v104 (db_id 28, ouvert 19/11 18:00) - nouveau trade, distinct de la cle '1' (doublon du 12/11). Numerotation affichee a confirmer par Ahmed."
   }
