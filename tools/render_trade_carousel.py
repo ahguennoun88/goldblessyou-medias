@@ -131,7 +131,7 @@ def slide2(t, bal, xlabel, lesson):
     dur_txt = (f"{int(dur // 60)}h{int(dur % 60):02d}" if dur >= 60 else f"{int(dur)} min") if dur is not None else "—"
     tile = lambda l, v, c: (f'<div style="background:#1A1815;border:1px solid {LINE};border-radius:28px;padding:26px 28px;'
                             f'display:flex;flex-direction:column;gap:8px"><span style="font-size:22px;color:{MUTED}">{e(l)}</span>'
-                            f'<span style="font-family:\'Space Grotesk\',sans-serif;font-size:40px;font-weight:700;color:{c};'
+                            f'<span style="font-family:\'Space Grotesk\',sans-serif;font-size:{40 if len(v)<=8 else 32}px;white-space:nowrap;font-weight:700;color:{c};'
                             f'font-variant-numeric:tabular-nums">{e(v)}</span></div>')
     tiles = [tile("P&L", money(pnl, True) if pnl is not None else "—", col), tile("Duration", dur_txt, INK)]
     if t.get("fees_eur") is not None:

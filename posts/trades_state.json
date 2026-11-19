@@ -1,8 +1,8 @@
 {
   "_doc": "Etat des posts de trades (tache horaire :08). Ouverture = STORY 1080x1920, cloture = CARROUSEL 2 slides 1080x1350 (tools/render_trade_carousel.py). Par numero de trade : open/close = 'published <lien>' ou 'prepared <horodatage>' (apercu envoye, en attente du « publie » d'Ahmed). Ne jamais republier un trade marque 'published'.",
   "_numbering": {
-    "offset": 23,
-    "_doc": "Numero affiche = trade_no du bot - offset (trade 24 du bot = Trade #1, decide par Ahmed le 12/11/2026). Mettre 0 si l'export recoit un vrai --challenge-start."
+    "offset": -1,
+    "_doc": "Numero affiche = trade_no du bot - offset. Historique : offset 23 (trade 24 du bot = Trade #1, decide le 12/11/2026). Le journal v104 repart a 1 : trade_no 1 du 19/11 = Trade #2 (publie). Depuis le 19/11/2026 (decision d'Ahmed) offset = -1 : prochain trade du bot (trade_no 2) = Trade #3."
   },
   "23": {
     "open": "skipped (avant automatisation)",
