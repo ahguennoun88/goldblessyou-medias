@@ -12,6 +12,8 @@ Aucune donnee inventee : sans --prev-close la pastille est omise, sans --catalys
 Le biais affiche est UNIQUEMENT celui du bot (H4).
 Graphique : si candles_h1 est present, chandeliers H1 + resistance / pivot / cloture veille / support
 (remplace les tuiles de niveaux) ; cloture veille lue dans prev_close du JSON si --prev-close absent.
+Garde-fou swing : si key_support / key_resistance est deja casse par les bougies affichees, il est remplace par
+support_20p / resistance_20p du bot (message "NIVEAUX :" sur stderr, a reporter dans l apercu).
 Niveaux cles : lus dans levels du JSON (key_resistance|resistance_vwap_daily, ema50 (H1, ou ema50_tf), key_support) ; nuls -> omis.
 Necessite Playwright (python) avec Chromium.
 """
@@ -83,6 +85,37 @@ def first(d, *keys):
         if d.get(k) is not None:
             return d[k]
     return None
+
+
+def fix_broken_swings(levels, candles):
+    """Garde-fou : un swing low enfonce par une bougie POSTERIEURE a sa formation (ou un swing high depasse) est deja casse.
+    On le remplace par le plus bas/haut sur 20 periodes du bot (support_20p / resistance_20p), si celui-ci tient sur
+    ces memes bougies ; sinon on garde la valeur du bot. Chaque cas est signale. Bougie de formation = celle dont le
+    plus bas (ou plus haut) egale le swing ; introuvable -> simple avertissement, aucune correction."""
+    cs = [c for c in (candles or []) if c.get("l") is not None and c.get("h") is not None]
+    if not levels or not cs:
+        return []
+    notes = []
+    for key, alt, f, sign in (("key_support", "support_20p", "l", 1), ("key_resistance", "resistance_20p", "h", -1)):
+        v, a = levels.get(key), levels.get(alt)
+        if v is None:
+            continue
+        idx = [i for i, c in enumerate(cs) if abs(c[f] - v) < 0.005]
+        after = cs[idx[-1] + 1:] if idx else cs
+        if not after:
+            continue
+        ext = min(c["l"] for c in after) if sign == 1 else max(c["h"] for c in after)
+        if sign * (v - ext) <= 0.005:          # le niveau tient
+            continue
+        if not idx:                            # origine du swing inconnue : on ne corrige pas a l'aveugle
+            notes.append(f"A VERIFIER {key} {v} : bougie de formation absente du graphique et depassee par {ext} ; valeur du bot conservee")
+            continue
+        if a is not None and sign * (a - ext) <= 0.005:
+            levels[key] = a
+            notes.append(f"{key} {v} deja casse (extreme ulterieur : {ext}) -> remplace par {alt} = {a}")
+        else:
+            notes.append(f"ATTENTION {key} {v} deja casse (extreme ulterieur : {ext}) et {alt} = {a} ne tient pas : valeur du bot conservee, a verifier")
+    return notes
 
 
 def build_levels(levels):
@@ -270,6 +303,8 @@ def main():
     pc = doc.get("prev_close") or {}
     if a.prev_close is None and pc.get("value") is not None:   # cloture veille du bot (bougies_h1) par defaut
         a.prev_close, a.prev_close_pct, a.prev_day = pc["value"], pc.get("pct"), pc.get("day") or a.prev_day
+    for note in fix_broken_swings(doc.get("levels"), doc.get("candles_h1")):
+        print(f"NIVEAUX : {note}", file=sys.stderr)
     prev_obj = {"value": a.prev_close, "pct": a.prev_close_pct, "day": a.prev_day} if a.prev_close is not None else None
     render(build_html(analysis, ref, a.prev_close, a.prev_close_pct, a.prev_day, a.catalyst_title, a.catalyst_desc,
                       doc.get("levels"), doc.get("candles_h1"), prev_obj, open_trades(a, ref)), a.out)
