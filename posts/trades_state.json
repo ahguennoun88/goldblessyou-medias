@@ -23,7 +23,8 @@
   },
   "1_2026-11-19": {
     "open": "published https://www.instagram.com/stories/goldblessyou.xau/4033987629263826670 (story)",
-    "close": "prepared 2026-11-19T22:14Z (carrousel, affiche Trade #2 via --display-no, a confirmer)",
-    "_note": "trade_no 1 du journal v104 (db_id 28, ouvert 19/11 18:00) - nouveau trade, distinct de la cle '1' (doublon du 12/11). Numerotation affichee a confirmer par Ahmed."
+    "close": "published https://www.instagram.com/p/Df8I2Jzl5lO/ (carrousel 2 slides, affiche Trade #2 via --display-no)",
+    "_note": "trade_no 1 du journal v104 (db_id 28, ouvert 19/11 18:00) - nouveau trade, distinct de la cle '1' (doublon du 12/11). Numerotation affichee a confirmer par Ahmed.",
+    "display_no": 2
   }
 }
