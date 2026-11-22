@@ -1,0 +1,21 @@
+Week 1 report: +1.70R. 🟡
+
+Gold had its worst week in 8 months (≈ −9%, low $3,514). The bot sat out Monday to Wednesday while price drifted sideways, then took one trade with the trend.
+
+📊 Scoreboard
+Broker balance: €7,296.76 → €8,558.29
+Week P&L: +€1,261.53 (+17.3%)
+1 trade · 1 win · 0 losses · max drawdown 0%
+
+📌 Trade #2: SELL XAU/USD, breakout retest, take profit hit (+1.70R)
+
+🧠 Lessons
+Technical: patience paid, no clean setup, no trade.
+Macro: the Fed and the dollar gave the direction, the chart gave the timing.
+Psychological: a week is judged on decisions, not activity.
+
+Next week: US PCE + GDP (Wed), Thanksgiving (Thu), Fed on Dec 9.
+
+Personal view, not financial advice. Trading involves risk of loss.
+
+#XAUUSD #gold #tradingbot #algotrading #goldtrading
