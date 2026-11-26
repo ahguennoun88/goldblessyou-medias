@@ -94,7 +94,7 @@ def slide1(t, no, bal):
     col = colour(t)
     stats = [("P&L", money(t["pnl_eur"], True) if t.get("pnl_eur") is not None else None, col),
              ("Balance", money(bal) if bal is not None else None, INK),
-             ("Strategy", (t.get("strategy") or "").capitalize() or None, GOLD),
+             ("Strategy", rts.strategy_label(t), GOLD),
              ("Date", datetime.strptime(t["closed_at"], "%Y-%m-%d %H:%M").strftime("%a, %b %-d"), INK)]
     stats = [s for s in stats if s[1]]
     cells = "".join(

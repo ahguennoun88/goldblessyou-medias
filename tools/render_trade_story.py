@@ -65,8 +65,19 @@ def pill(text, fg, bg, dot=False, upper=False):
             f'background: {bg}; color: {fg}; font-size: 26px; {up} font-variant-numeric: tabular-nums">{d}{e(text)}</span>')
 
 
+# Noms de strategie du bot (francais) -> libelle anglais affiche (decision d'Ahmed du 26/11/2026 : toujours en anglais).
+STRATEGY_EN = {"creux": "Dip", "cassure": "Breakout", "rebond": "Bounce", "retracement": "Pullback", "tendance": "Trend"}
+
+
+def strategy_label(t):
+    s = (t.get("strategy") or "").strip()
+    if not s:
+        return None
+    return STRATEGY_EN.get(s.lower(), s.replace("_", " ").capitalize())
+
+
 def setup_line(t):
-    parts = [f"{t['strategy'].capitalize()} setup" if t.get("strategy") else None, "H1"]
+    parts = [f"{strategy_label(t)} setup" if t.get("strategy") else None, "H1"]
     return " · ".join(p for p in parts if p)
 
 
