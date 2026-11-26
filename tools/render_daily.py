@@ -244,7 +244,8 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
                          + (f'<br><span style="display: inline-flex; gap: 14px; margin-top: 12px">{"".join(chips)}</span>' if any(chips) else ""))
         dstyle = dict(decision_box=f"background: linear-gradient(135deg, rgba({rgb}, 0.16), rgba({rgb}, 0.04)); border: 3px solid {decision_color}; "
                                    f"box-shadow: 0 0 48px rgba({rgb}, 0.28)",
-                      decision_pad="30px 36px", decision_gap="10px", decision_title_color=decision_color,
+                      decision_pad="30px 36px", decision_gap="10px", decision_title_color=BULL,  # « Live » toujours en vert
+                     
                       decision_text_size="26px", decision_size="84px")
         decision_title = "● " + decision_title.replace("Open position", "Live position")
 
