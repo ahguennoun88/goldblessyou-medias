@@ -50,9 +50,9 @@ PAGE = Template("""<!doctype html>
 <div style="display: flex; align-items: center; gap: 20px; font-family: 'Space Grotesk', sans-serif; font-size: $bias_size; line-height: 1; font-weight: 700; color: $bias_color">
 <svg width="$bias_icon" height="$bias_icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">$bias_paths</svg>$bias_label</div>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">$tiles</div></div>
-<div style="background: #1A1815; border: 1px solid #2E2A22; border-radius: 28px; padding: 26px 36px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
-<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: #A69F90; font-weight: 600">$decision_title</span><span style="font-size: 26px; line-height: 1.35">$decision_text</span></span>
-<span style="font-family: 'Space Grotesk', sans-serif; font-size: 56px; line-height: 1; font-weight: 700; color: $decision_color">$decision</span></div>
+<div style="$decision_box; border-radius: 28px; padding: $decision_pad; display: flex; align-items: center; justify-content: space-between; gap: 24px">
+<span style="display: flex; flex-direction: column; gap: $decision_gap"><span style="font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: $decision_title_color; font-weight: 600">$decision_title</span><span style="font-size: $decision_text_size; line-height: 1.35">$decision_text</span></span>
+<span style="font-family: 'Space Grotesk', sans-serif; font-size: $decision_size; line-height: 1; font-weight: 700; color: $decision_color">$decision</span></div>
 $levels
 $catalyst
 </div>
@@ -131,7 +131,7 @@ def build_levels(levels):
     return LEVELS.substitute(n=len(tiles), tiles="".join(tiles))
 
 
-def build_chart(candles, levels, prev_close, price=None):
+def build_chart(candles, levels, prev_close, price=None, height=430):
     """Graphique H1 en chandeliers (candles_h1 du JSON) + resistance / pivot du jour / cloture veille / support.
     Toutes les valeurs viennent du JSON du bot ; un niveau nul n'est pas trace. Aucune bougie -> chaine vide."""
     cs = [c for c in (candles or []) if None not in (c.get("o"), c.get("h"), c.get("l"), c.get("c"))]
@@ -152,7 +152,7 @@ def build_chart(candles, levels, prev_close, price=None):
     if levels.get("key_support_src") not in (None, "S1") and piv.get("pivot_s1") is not None:
         lines.append(("S1 support", piv["pivot_s1"], BULL, "2 6"))     # idem pour S1
     lines = [x for x in lines if x[1] is not None]
-    W, H, L, R, T, B = 900, 430, 4, 142, 16, 40
+    W, H, L, R, T, B = 900, height, 4, 142, 16, 40
     vals = [c["h"] for c in cs] + [c["l"] for c in cs] + [v for _, v, _, _ in lines]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.06 or 1
@@ -222,6 +222,8 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
     decision_color = {"BUY": BULL, "SELL": BEAR}.get(decision, GOLD)
     decision_title = f"Bot decision · {(a.get('analysis_at') or '07:00')[-5:]} CET"
     decision_html = e(decision_text)
+    dstyle = dict(decision_box="background: #1A1815; border: 1px solid #2E2A22", decision_pad="26px 36px",
+                  decision_gap="4px", decision_title_color="#A69F90", decision_text_size="26px", decision_size="56px")
     if open_trades:                        # position en cours : elle remplace la decision horaire
         t = open_trades[0]
         decision = t["side"]
@@ -230,9 +232,23 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         l1 = f"Entry {money(t['entry'])}" + (f" · since {t['opened_at'][-5:]} CET" if t.get("opened_at") else "")
         l2 = " · ".join(x for x in (f"SL {money(t['stop_loss'])}" if t.get("stop_loss") is not None else "",
                                      f"TP {money(t['take_profit'])}" if t.get("take_profit") is not None else "") if x)
-        decision_html = e(l1) + (f'<br><span style="color: #A69F90">{e(l2)}</span>' if l2 else "")
+        rgb = "95, 211, 141" if decision == "BUY" else "255, 122, 92"
+        chip = ('<span style="display: inline-flex; gap: 10px; align-items: baseline; padding: 8px 16px; border-radius: 14px; '
+                'background: rgba({c}, 0.14); border: 1px solid rgba({c}, 0.45)"><span style="font-size: 20px; letter-spacing: 0.12em; '
+                'color: #A69F90; font-weight: 600">{k}</span><span style="font-size: 28px; font-weight: 700; color: {fg}">{v}</span></span>')
+        chips = [chip.format(c="255, 122, 92", fg=BEAR, k="SL", v=e(money(t["stop_loss"]))) if t.get("stop_loss") is not None else "",
+                 chip.format(c="95, 211, 141", fg=BULL, k="TP", v=e(money(t["take_profit"]))) if t.get("take_profit") is not None else ""]
+        decision_html = (f'<span style="font-family: \'Space Grotesk\', sans-serif; font-size: 40px; font-weight: 700; color: #F4EFE4">'
+                         f'Entry {e(money(t["entry"]))}</span>'
+                         + (f'<span style="font-size: 22px; color: #A69F90"> · since {e(t["opened_at"][-5:])} CET</span>' if t.get("opened_at") else "")
+                         + (f'<br><span style="display: inline-flex; gap: 14px; margin-top: 12px">{"".join(chips)}</span>' if any(chips) else ""))
+        dstyle = dict(decision_box=f"background: linear-gradient(135deg, rgba({rgb}, 0.16), rgba({rgb}, 0.04)); border: 3px solid {decision_color}; "
+                                   f"box-shadow: 0 0 48px rgba({rgb}, 0.28)",
+                      decision_pad="30px 36px", decision_gap="10px", decision_title_color=decision_color,
+                      decision_text_size="26px", decision_size="84px")
+        decision_title = "● " + decision_title.replace("Open position", "Live position")
 
-    chart = build_chart(candles, levels, price=a.get("price"), prev_close=prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
+    chart = build_chart(candles, levels, height=355 if open_trades else 430, price=a.get("price"), prev_close=prev_obj or ({'value': prev_close, 'day': prev_day} if prev_close is not None else None))
     pills = []
     if prev_close is not None and not chart:  # avec le graphique, la cloture veille est tracee dessus
         txt = f"{e(prev_day)} close: {money(prev_close)}"
@@ -260,7 +276,7 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         date_iso=ref.isoformat(), date_label=ref.strftime("%a, %b ") + str(ref.day) + ref.strftime(", %Y"),
         price=money(a["price"]), time=time_txt, pills="".join(pills),
         bias_color=bias_color, bias_paths=bias_icon, bias_label=bias_label, tiles="".join(tiles),
-        decision=e(decision), decision_text=decision_html, decision_title=e(decision_title), decision_color=decision_color,
+        decision=e(decision), decision_text=decision_html, decision_title=e(decision_title), decision_color=decision_color, **dstyle,
         levels=lv, catalyst=catalyst, handle=HANDLE,
         pad_top="170px" if chart else ("180px" if lv else "250px"), pad_bottom="250px" if chart else ("290px" if lv else "340px"),
         gap="20px" if chart else ("22px" if lv else "30px"),
