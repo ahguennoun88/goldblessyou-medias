@@ -168,12 +168,19 @@ def build_chart(candles, levels, prev_close, price=None, height=430):
             svg.append(f'<line x1="{X(i):.1f}" y1="{T}" x2="{X(i):.1f}" y2="{H-B}" stroke="#2E2A22" stroke-width="1"/>')
             svg.append(f'<text x="{X(i):.1f}" y="{H-12}" fill="#7D776B" font-size="20" text-anchor="middle">{hh}</text>')
     used = []
-    for name, v, col, dash in sorted(lines, key=lambda x: -x[1]):
-        y = ly = Y(v)
+    ordered = sorted(lines, key=lambda x: -x[1])
+    for name, v, col, dash in ordered:
+        ly = Y(v)
         for u in used:                       # etiquettes sans chevauchement
             if abs(ly - u) < 52:
                 ly = u + 52
         used.append(ly)
+    if used and used[-1] > H - 24:           # etiquettes debordant en bas : on remonte la pile
+        used[-1] = H - 24
+        for i in range(len(used) - 2, -1, -1):
+            used[i] = min(used[i], used[i + 1] - 52)
+    for (name, v, col, dash), ly in zip(ordered, used):
+        y = Y(v)
         svg.append(f'<line x1="{L}" y1="{y:.1f}" x2="{W-R+4}" y2="{y:.1f}" stroke="{col}" stroke-width="2" stroke-dasharray="{dash}"/>')
         svg.append(f'<rect x="{W-R+12}" y="{ly-19:.1f}" width="6" height="38" rx="3" fill="{col}"/>')
         svg.append(f'<text x="{W-R+24}" y="{ly-3:.1f}" fill="#A69F90" font-size="18">{html.escape(name)}</text>')
