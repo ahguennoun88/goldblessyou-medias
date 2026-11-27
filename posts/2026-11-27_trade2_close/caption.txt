@@ -4,5 +4,6 @@ Entry: 3,580.52 → Exit: 3,623.17
 Exit: stop loss hit (TP 3,431.24 not reached)
 Result: -1.00R · -€388.53
 Duration: 20h11 (Thu 07:00 → Fri 03:10 CET)
+Holding overnight adds risk: the setup was invalidated during the Asian session.
 Personal view, not financial advice. Trading involves risk of loss.
 #gold #xauusd #tradingbot #algotrading #goldtrading
