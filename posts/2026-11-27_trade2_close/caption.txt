@@ -1,0 +1,8 @@
+Trade #3 closed: -1.00R 🔴
+SELL XAU/USD · Dip setup · London session
+Entry: 3,580.52 → Exit: 3,623.17
+Exit: stop loss hit (TP 3,431.24 not reached)
+Result: -1.00R · -€388.53
+Duration: 20h11 (Thu 07:00 → Fri 03:10 CET)
+Personal view, not financial advice. Trading involves risk of loss.
+#gold #xauusd #tradingbot #algotrading #goldtrading
