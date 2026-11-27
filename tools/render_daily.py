@@ -359,10 +359,39 @@ def load_capital(a, ref):
     if cur.get("date") != ref.isoformat():
         print(f"CAPITAL : {p.name} date {cur.get('date')} != {ref}, pastille omise", file=sys.stderr)
         return None
+    start = (doc.get("challenge") or {}).get("start_capital_eur")
+    broker = broker_balance(p.parent, ref)
+    if broker and start:                   # decision d'Ahmed du 27/11 : solde REEL du compte, hausse comptee depuis le capital de depart
+        bal, when, src = broker
+        cur = dict(cur, balance=bal, since_start_pct=round((bal - start) / start * 100, 2))
+        doc = dict(doc, current=cur)
+        print(f"CAPITAL : solde broker {bal} EUR ({when}, {src}) ; {cur['since_start_pct']:+.2f} % vs {start:.0f} EUR", file=sys.stderr)
+    else:
+        print("CAPITAL : aucun solde broker trouve, solde reconstruit du journal", file=sys.stderr)
     for w in doc.get("warnings") or []:
         print(f"CAPITAL : {w}", file=sys.stderr)
     print(f"CAPITAL : {cur.get('balance')} EUR ({cur.get('since_start_pct')} %) jour {cur.get('day')} - {p.name}", file=sys.stderr)
     return doc
+
+
+def broker_balance(folder, ref):
+    """Dernier solde reel du compte broker lu dans les trade_*.json (<= ref) : balance_after_broker a la cloture,
+    ou balance_before_broker a l'ouverture si plus recente. Renvoie (solde, horodatage, fichier) ou None."""
+    latest = {}
+    for f in folder.glob("trade_*_trade*.json"):
+        if f.name[6:16] > ref.isoformat():
+            continue
+        d = json.loads(f.read_text(encoding="utf-8"))
+        t = d.get("trade", d)
+        k = t.get("trade_no")
+        if k is not None and (k not in latest or (d.get("generated_at") or "") > latest[k][0]):
+            latest[k] = (d.get("generated_at") or "", t, f.name)
+    best = None
+    for _, t, name in latest.values():
+        for when, bal in ((t.get("closed_at"), t.get("balance_after_broker")), (t.get("opened_at"), t.get("balance_before_broker"))):
+            if when and bal is not None and (best is None or when > best[1]):
+                best = (float(bal), when, name)
+    return best
 
 
 def open_trades(a, ref):
