@@ -1,0 +1,8 @@
+Trade #4 closed: -1.01R 🔴
+SELL XAU/USD · Pullback setup · NY session
+Entry: 3,625.81 → Exit: 3,654.43
+Exit: stop loss hit (TP 3,540.52 not reached)
+Result: -1.01R · -€576.39
+Duration: 2h05 (17:00 → 19:05 CET)
+Personal view, not financial advice. Trading involves risk of loss.
+#gold #xauusd #tradingbot #algotrading #goldtrading
