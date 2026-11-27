@@ -31,5 +31,10 @@
     "open": "published https://www.instagram.com/stories/goldblessyou.xau/4038807487381983219 (story, affiche Trade #3, contexte enrichi via --why)",
     "close": "published https://www.instagram.com/p/DgPE9hzDoWU/ (carrousel 2 slides, affiche Trade #3, avec lesson)",
     "display_no": 3
+  },
+  "3": {
+    "open": "prepared 2026-11-27T17:08+01:00 (story stories/2026-11-27_trade3_open.jpg, affiche Trade #4)",
+    "close": null,
+    "display_no": 4
   }
 }
