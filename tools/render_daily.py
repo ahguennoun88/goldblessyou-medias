@@ -212,7 +212,7 @@ def money(x):
 
 
 def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, levels=None, candles=None, prev_obj=None,
-               open_trades=None):
+               open_trades=None, capital=None):
     e = html.escape
     bias = (a.get("h4_bias") or "").lower()
     if bias == "bullish":
@@ -265,6 +265,15 @@ def build_html(a, ref, prev_close, prev_pct, prev_day, cat_title, cat_desc, leve
         pills.append(PILL.format(txt))
     if a.get("atr") is not None:
         pills.append(PILL.format(f"ATR (H1): {a['atr']:.2f}"))
+    cur = (capital or {}).get("current") or {}
+    if cur.get("balance") is not None:     # capital du challenge (challenge_<date>.json du bot)
+        txt = f'Capital: <b style="color: #F5F1E8">€{cur["balance"]:,.0f}</b>'
+        pct = cur.get("since_start_pct")
+        if pct is not None:
+            txt += (f' <b style="color: {BULL if pct >= 0 else BEAR}">{"+" if pct >= 0 else "−"}{abs(pct):.2f}%</b>')
+        if cur.get("day") is not None:
+            txt += f' · Day {int(cur["day"])}'
+        pills.append(PILL.format(f"<span>{txt}</span>"))   # span : garde les espaces dans la pastille flex
 
     regime = REGIMES.get(a.get("regime") or "", (a.get("regime") or "—").replace("_", " ").capitalize())
     big = 34 if chart else 40
@@ -318,6 +327,8 @@ def main():
     ap.add_argument("--catalyst-desc")
     ap.add_argument("--trade-json", action="append", help="trade_*.json (repetable) ; defaut : recherche automatique")
     ap.add_argument("--no-trades", action="store_true", help="ne pas afficher les positions ouvertes")
+    ap.add_argument("--challenge", help="challenge_YYYY-MM-DD.json ; defaut : a cote du daily")
+    ap.add_argument("--no-capital", action="store_true", help="ne pas afficher le capital")
     a = ap.parse_args()
     doc = json.loads(Path(a.json).read_text(encoding="utf-8"))
     analysis = doc.get("analysis")
@@ -331,8 +342,27 @@ def main():
         print(f"NIVEAUX : {note}", file=sys.stderr)
     prev_obj = {"value": a.prev_close, "pct": a.prev_close_pct, "day": a.prev_day} if a.prev_close is not None else None
     render(build_html(analysis, ref, a.prev_close, a.prev_close_pct, a.prev_day, a.catalyst_title, a.catalyst_desc,
-                      doc.get("levels"), doc.get("candles_h1"), prev_obj, open_trades(a, ref)), a.out)
+                      doc.get("levels"), doc.get("candles_h1"), prev_obj, open_trades(a, ref), load_capital(a, ref)), a.out)
     print(f"OK {a.out}")
+
+
+def load_capital(a, ref):
+    """Capital du challenge : --challenge, sinon challenge_<date>.json a cote du daily. Absent ou d'une autre date -> omis."""
+    if a.no_capital:
+        return None
+    p = Path(a.challenge) if a.challenge else Path(a.json).with_name(f"challenge_{ref.isoformat()}.json")
+    if not p.exists():
+        print(f"CAPITAL : {p.name} absent, pastille omise", file=sys.stderr)
+        return None
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    cur = doc.get("current") or {}
+    if cur.get("date") != ref.isoformat():
+        print(f"CAPITAL : {p.name} date {cur.get('date')} != {ref}, pastille omise", file=sys.stderr)
+        return None
+    for w in doc.get("warnings") or []:
+        print(f"CAPITAL : {w}", file=sys.stderr)
+    print(f"CAPITAL : {cur.get('balance')} EUR ({cur.get('since_start_pct')} %) jour {cur.get('day')} - {p.name}", file=sys.stderr)
+    return doc
 
 
 def open_trades(a, ref):
