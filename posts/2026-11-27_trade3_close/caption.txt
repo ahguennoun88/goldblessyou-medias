@@ -4,5 +4,6 @@ Entry: 3,625.81 → Exit: 3,654.43
 Exit: stop loss hit (TP 3,540.52 not reached)
 Result: -1.01R · -€576.39
 Duration: 2h05 (17:00 → 19:05 CET)
+Lesson: Shorted into a $60 rally before price reached the pullback zone. Waiting for the zone would have meant a better entry, or no trade at all.
 Personal view, not financial advice. Trading involves risk of loss.
 #gold #xauusd #tradingbot #algotrading #goldtrading
